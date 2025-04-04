@@ -1,0 +1,30 @@
+{
+    "name": "arun/readme-generator",
+    "description": "This package will generate a Readme.md file according to your codebase.",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Arun\\ReadmeGenerator\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "arunsahijpal",
+            "email": "arunsahijpal111@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "symfony/console": "^7.2",
+        "symfony/yaml": "^7.2",
+        "openai-php/client": "^0.10.3",
+        "symfony/http-client": "^7.2",
+        "nyholm/psr7": "^1.8",
+        "guzzlehttp/guzzle": "^7.9"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
+}
