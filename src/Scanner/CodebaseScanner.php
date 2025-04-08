@@ -3,9 +3,6 @@
 namespace Innoraft\ReadmeGenerator\Scanner;
 
 use Symfony\Component\Yaml\Yaml;
-use RecursiveIteratorIterator;
-use RecursiveDirectoryIterator;
-use SplFileInfo;
 
 class CodebaseScanner
 {
@@ -22,8 +19,14 @@ class CodebaseScanner
         $files = $this->listRelevantFiles();
         $parsedFunctionsAndClasses = $this->parseCodeFiles($files);
         $parsedUsefulData = $this->extractUsefulData($files);
+        $submodules = $this->listSubmodules(); // ✅ Submodule info added
 
-        return array_merge($moduleInfo, $parsedFunctionsAndClasses, $parsedUsefulData);
+        return array_merge(
+            $moduleInfo,
+            $parsedFunctionsAndClasses,
+            $parsedUsefulData,
+            ['submodules' => $submodules] // ✅ Merge submodule data
+        );
     }
 
     private function extractModuleInfo(): array
@@ -37,44 +40,63 @@ class CodebaseScanner
             $info['description'] = $moduleInfo['description'] ?? 'No description available.';
             $info['dependencies'] = $moduleInfo['dependencies'] ?? [];
         }
-        
+
         return $info;
     }
 
     private function listRelevantFiles(): array
     {
-        $extensions = ['php', 'module', 'yml']; // Important file types
-        $importantPaths = [
-            'src/Controller/', 'src/Form/', 'src/Entity/', 'src/Plugin/', 'src/Utility/',
-            'config/install/', '*.module', '*.routing.yml', '*.schema.yml'
-        ];
-    
         $files = [];
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->modulePath));
 
-        /** @var SplFileInfo $file */
-        foreach ($iterator as $file) {
-            if ($file->isFile()) {
-                $filePath = $file->getPathname();
-                $relativePath = str_replace($this->modulePath . '/', '', $filePath);
+        // Top-level important files
+        $topLevelPatterns = [
+            '*.info.yml', '*.module', '*.install',
+            '*.routing.yml', '*.permissions.yml',
+            '*.links.menu.yml', '*.links.task.yml',
+            '*.schema.yml',
+        ];
 
-                // Check if file is in important paths
-                foreach ($importantPaths as $importantPath) {
-                    if (strpos($relativePath, $importantPath) === 0) {
-                        $files[] = $filePath;
-                        continue 2;
-                    }
-                }
+        foreach ($topLevelPatterns as $pattern) {
+            foreach (glob($this->modulePath . '/' . $pattern) as $file) {
+                $files[] = $file;
+            }
+        }
 
-                // Check if file has an important extension
-                $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-                if (in_array($extension, $extensions)) {
-                    $files[] = $filePath;
-                }
+        // Scan key src subdirectories
+        $subDirs = [
+            'src/Controller/*.php',
+            'src/Form/*.php',
+            'src/Plugin/*.php',
+            'src/Entity/*.php',
+            'src/Utility/*.php',
+            'config/install/*.yml',
+        ];
+
+        foreach ($subDirs as $pattern) {
+            foreach (glob($this->modulePath . '/' . $pattern) as $file) {
+                $files[] = $file;
             }
         }
 
         return $files;
+    }
+
+    private function listSubmodules(): array
+    {
+        $submodules = [];
+
+        foreach (glob($this->modulePath . '/modules/*/*.info.yml') as $infoFile) {
+            $machineName = basename($infoFile, '.info.yml');
+            $infoData = Yaml::parseFile($infoFile);
+             // Parse the .info.yml
+
+            $submodules[] = [
+                'name' => $machineName,
+                'description' => $infoData['description'] ?? 'No description available.',
+            ];
+        }
+
+        return $submodules;
     }
 
     private function parseCodeFiles(array $files): array
