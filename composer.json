@@ -4,13 +4,17 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Arun\\ReadmeGenerator\\": "src/"
+            "Innoraft\\ReadmeGenerator\\": "src/"
         }
     },
     "authors": [
         {
             "name": "arunsahijpal",
             "email": "arunsahijpal111@gmail.com"
+        },
+        {
+            "name": "kul pratap singh",
+            "email": "kulpratap98@gmail.com"
         }
     ],
     "minimum-stability": "stable",

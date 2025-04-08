@@ -1,6 +1,6 @@
 <?php
 
-namespace Arun\ReadmeGenerator\Scanner;
+namespace Innoraft\ReadmeGenerator\Scanner;
 
 use Symfony\Component\Yaml\Yaml;
 use RecursiveIteratorIterator;

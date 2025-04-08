@@ -1,13 +1,13 @@
 <?php
 
-namespace Arun\ReadmeGenerator\Console;
+namespace Innoraft\ReadmeGenerator\Console;
 
-use Arun\ReadmeGenerator\Scanner\CodebaseScanner;
+use Innoraft\ReadmeGenerator\Scanner\CodebaseScanner;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Arun\ReadmeGenerator\AI\AIResponse;
+use Innoraft\ReadmeGenerator\AI\AIResponse;
 
 class GenerateReadmeCommand extends Command
 {

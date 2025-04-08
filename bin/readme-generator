@@ -4,7 +4,7 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 use Symfony\Component\Console\Application;
-use Arun\ReadmeGenerator\Console\GenerateReadmeCommand;
+use Innoraft\ReadmeGenerator\Console\GenerateReadmeCommand;
 
 $application = new Application();
 $application->add(new GenerateReadmeCommand());
