@@ -9,22 +9,67 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Innoraft\ReadmeGenerator\AI\AIResponse;
 
+/**
+ * Class GenerateReadmeCommand
+ *
+ * A Symfony Console Command that generates a README.md file
+ * for a given Drupal module using AI-generated summaries.
+ */
 class GenerateReadmeCommand extends Command
 {
+    /**
+     * GenerateReadmeCommand constructor.
+     */
     public function __construct()
     {
         parent::__construct('generate-readme');
     }
 
-    protected function configure()
+    /**
+     * Configures the command name, description, and input arguments.
+     *
+     * @return void
+     */
+    protected function configure(): void
     {
         $this
-            ->setDescription('Generates a README.json file for a module')
+            ->setDescription('Generates a README.md file for a Drupal module')
             ->addArgument('module_path', InputArgument::REQUIRED, 'Path to the module');
     }
 
+    /**
+     * Executes the console command to generate the README file.
+     *
+     * @param InputInterface $input
+     *   The input interface.
+     * @param OutputInterface $output
+     *   The output interface.
+     *
+     * @return int
+     *   Command exit code.
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $config = require __DIR__ . '/../../config/ai.php';
+
+        $requiredKeys = ['api_key', 'base_uri', 'chat_endpoint', 'model'];
+        $missing = [];
+
+        foreach ($requiredKeys as $key) {
+            if (empty($config[$key])) {
+                $missing[] = $key;
+            }
+        }
+
+        if (!empty($missing)) {
+            $output->writeln("<error>❌ Missing values in config/ai.php:</error>");
+            foreach ($missing as $key) {
+                $output->writeln(" - $key");
+            }
+            $output->writeln("\n<comment>Please provide the required values in config/ai.php before running the command.</comment>");
+            return Command::FAILURE;
+        }
+
         $modulePath = $input->getArgument('module_path');
 
         if (!is_dir($modulePath)) {
@@ -35,7 +80,6 @@ class GenerateReadmeCommand extends Command
         $scanner = new CodebaseScanner($modulePath);
         $moduleData = $scanner->scan();
 
-        // Sanitize and ensure structure
         $structuredData = [
             'name' => $moduleData['name'] ?? 'Unknown Module',
             'description' => $moduleData['description'] ?? 'No description available.',
@@ -45,21 +89,11 @@ class GenerateReadmeCommand extends Command
             'functions' => $moduleData['functions'] ?? [],
         ];
 
-        // Save as JSON
-        $jsonPath = $modulePath . '/_scan_summary.json';
-        file_put_contents($jsonPath, json_encode($moduleData, JSON_PRETTY_PRINT));
+        $ai = new AIResponse();
+        $summary = $ai->summarizeArray($structuredData);
 
-        $output->writeln("<info>README_DATA.json generated at:</info> $jsonPath");
-        $aiKey = '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'; 
-        $ai = new AIResponse($aiKey);
-
-        // Pass the JSON file path for summarization
-        $summary = $ai->summarizeFile($jsonPath);
-
-        // Save final README
-        $readmePath = $modulePath . '/README_NEW.md';
+        $readmePath = $modulePath . '/README.md';
         file_put_contents($readmePath, $summary);
-        unlink($jsonPath);
 
         $output->writeln("<info>✅ AI-generated README.md created at:</info> $readmePath");
 

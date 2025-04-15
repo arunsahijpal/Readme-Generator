@@ -4,78 +4,109 @@ namespace Innoraft\ReadmeGenerator\AI;
 
 use GuzzleHttp\Client;
 
-class AIResponse {
-    protected $client;
-    protected $apiKey;
+/**
+ * Class AIResponse
+ *
+ * Handles communication with the AI API to generate README content
+ * based on scanned Drupal module data.
+ */
+class AIResponse
+{
+    /**
+     * Guzzle HTTP client instance.
+     *
+     * @var \GuzzleHttp\Client
+     */
+    protected Client $client;
 
-    public function __construct(string $apiKey)
+    /**
+     * Configuration array for the AI API.
+     *
+     * @var array
+     */
+    protected array $config;
+
+    /**
+     * AIResponse constructor.
+     *
+     * Initializes the Guzzle client with base URI and headers
+     * loaded from the configuration file.
+     */
+    public function __construct()
     {
-        $this->apiKey = $apiKey;
+        $this->config = require __DIR__ . '/../../config/ai.php';
+
         $this->client = new Client([
-            'base_uri' => 'https://api.groq.com/',
+            'base_uri' => $this->config['base_uri'],
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer ' . $this->config['api_key'],
                 'Content-Type' => 'application/json',
             ],
         ]);
     }
 
-    public function summarizeFile(string $filePath, string $model = 'llama3-8b-8192', int $maxTokens = 500): string
+    /**
+     * Sends module data to the AI API and returns summarized README content.
+     *
+     * @param array $moduleData
+     *   An array of structured data extracted from the Drupal module.
+     *
+     * @return string
+     *   The generated README.md content, or an error message.
+     */
+    public function summarizeArray(array $moduleData): string
     {
-        if (!file_exists($filePath)) {
-            return 'Error: File not found.';
-        }
-
-        $fileContent = file_get_contents($filePath);
+        $jsonContent = json_encode($moduleData, JSON_PRETTY_PRINT);
 
         $template = <<<EOT
-You are a Drupal module documentation expert. Your task is to generate only the contents of a README.md file for a Drupal module.
+        You are a Drupal module documentation expert. Your task is to generate only the contents of a README.md file for a Drupal module.
+        
+        IMPORTANT:
+        - Do NOT start with lines like "Here is the README for..."
+        - The output should START DIRECTLY with the line: "CONTENTS OF THIS FILE"
+        - Follow the exact format below.
+        
+        CONTENTS OF THIS FILE
+        
+        - Introduction
+        - Requirements
+        - Installation
+        - Recommended modules
+        - Configuration
+        - Maintainers
+        
+        # [Module Name]
+        
+        ## Introduction
+        Write a detailed explanation of what the module does in 4 to 5 lines.
+        
+        ## Requirements
+        Only list the names of required modules or Drupal core. Do not explain them, also start name of the module from capital letter.
+        
+        ## Installation
+        Only write the composer command:
+        composer require drupal/module_machine_name
+        
+        ## Recommended modules
+        List names of recommended modules. No descriptions.
+        
+        ## Configuration
+        Explain in detail and in points how to configure the module after enabling it.
+        
+        ## Maintainers
+        Add a placeholder for the maintainer.
+        
+        Now, analyze the following Drupal module file and generate the README.md content accordingly:
+    
+        {$jsonContent}
+        EOT;
 
-IMPORTANT:
-- Do NOT include any introduction or extra explanation.
-- Do NOT start with lines like "Here is the README for..."
-- The output should START DIRECTLY with the line: "CONTENTS OF THIS FILE"
-- Follow the exact format below.
-
-CONTENTS OF THIS FILE
-
-- Introduction
-- Requirements
-- Installation
-- Recommended modules
-- Configuration
-- Maintainers
-
-# [Module Name]
-
-## Introduction
-Write a detailed explanation of what the module does in 4 to 5 lines.
-
-## Requirements
-Only list the names of required modules or Drupal core. Do not explain them, also start name of the module from capital letter.
-
-## Installation
-Only write the composer command:
-composer require drupal/module_machine_name
-
-## Recommended modules
-List names of recommended modules. No descriptions.
-
-## Configuration
-Explain in detail how to configure the module after enabling it.
-
-## Maintainers
-Add a placeholder for the maintainer.
-
-Now, analyze the following Drupal module file and generate the README.md content accordingly:
-
-{$fileContent}
-EOT;
+        $maxTokens = 500;
 
         try {
-            $response = $this->client->post('openai/v1/chat/completions', [
+            $response = $this->client->post($this->config['chat_endpoint'], [
                 'json' => [
-                    'model' => $model,
+                    'model' => $this->config['model'],
                     'messages' => [['role' => 'user', 'content' => $template]],
                     'max_tokens' => $maxTokens,
                 ],
@@ -84,7 +115,6 @@ EOT;
             $body = json_decode($response->getBody(), true);
             $readmeContent = $body['choices'][0]['message']['content'] ?? 'No README generated.';
 
-            // Remove anything before "CONTENTS OF THIS FILE"
             if (preg_match('/CONTENTS OF THIS FILE/i', $readmeContent, $matches, PREG_OFFSET_CAPTURE)) {
                 $startPos = $matches[0][1];
                 $readmeContent = substr($readmeContent, $startPos);
