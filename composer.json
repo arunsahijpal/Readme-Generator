@@ -1,5 +1,5 @@
 {
-    "name": "arun/readme-generator",
+    "name": "innoraft/readme-generator",
     "description": "This package will generate a Readme.md file according to your codebase.",
     "license": "MIT",
     "autoload": {
@@ -31,5 +31,6 @@
         "allow-plugins": {
             "php-http/discovery": true
         }
-    }
+    },
+    "bin": ["bin/readme-generator"]
 }

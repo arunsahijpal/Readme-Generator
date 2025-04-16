@@ -59,10 +59,22 @@ class GenerateReadmeCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $envPath = __DIR__ . '/../../';
-        $envFile = $envPath . '.env';
-
-        if (!file_exists($envFile)) {
+        $cwd = getcwd();
+        $searchDirs = [
+            $cwd,
+            realpath($cwd . '/../../../..'),
+            dirname(__DIR__, 4),
+        ];
+    
+        $envPath = null;
+        foreach ($searchDirs as $dir) {
+            if ($dir && file_exists($dir . '/.env')) {
+                $envPath = $dir;
+                break;
+            }
+        }
+    
+        if (!$envPath) {
             $output->writeln("<error>❌ .env file not found.</error>");
             $output->writeln("Please create a .env file with the following keys:");
             $output->writeln("API_KEY=");
@@ -71,7 +83,7 @@ class GenerateReadmeCommand extends Command
             $output->writeln("MODEL=");
             return Command::FAILURE;
         }
-
+    
         $dotenv = Dotenv::createImmutable($envPath);
         $dotenv->safeLoad();
 
