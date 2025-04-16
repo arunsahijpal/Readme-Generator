@@ -4,11 +4,38 @@ namespace Innoraft\ReadmeGenerator\AI;
 
 use GuzzleHttp\Client;
 
+/**
+ * Class AIResponse
+ *
+ * Handles communication with the AI service to generate README.md content
+ * for Drupal modules based on provided metadata.
+ *
+ * @package Innoraft\ReadmeGenerator\AI
+ */
 class AIResponse
 {
+    /**
+     * The Guzzle HTTP client instance.
+     *
+     * @var \GuzzleHttp\Client
+     */
     protected Client $client;
+
+    /**
+     * Configuration array containing API credentials and settings.
+     *
+     * @var array
+     */
     protected array $config;
 
+    /**
+     * AIResponse constructor.
+     *
+     * Initializes the HTTP client with base URI and headers.
+     *
+     * @param array $config
+     *   Configuration array including 'base_uri', 'api_key', 'chat_endpoint', and 'model'.
+     */
     public function __construct(array $config)
     {
         $this->config = $config;
@@ -22,9 +49,19 @@ class AIResponse
         ]);
     }
 
+    /**
+     * Generates a summarized README.md content from an array of module data.
+     *
+     * @param array $moduleData
+     *   Associative array containing parsed module information.
+     *
+     * @return string
+     *   Generated README content or an error message.
+     */
     public function summarizeArray(array $moduleData): string
     {
         $jsonContent = json_encode($moduleData, JSON_PRETTY_PRINT);
+
         $template = <<<EOT
         You are a Drupal module documentation expert. Your task is to generate only the contents of a README.md file for a Drupal module.
         
@@ -74,7 +111,12 @@ class AIResponse
             $response = $this->client->post($this->config['chat_endpoint'], [
                 'json' => [
                     'model' => $this->config['model'],
-                    'messages' => [['role' => 'user', 'content' => $template]],
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => $template,
+                        ],
+                    ],
                     'max_tokens' => $maxTokens,
                 ],
             ]);
