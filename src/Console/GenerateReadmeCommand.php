@@ -8,28 +8,15 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Innoraft\ReadmeGenerator\AI\AIResponse;
+use Dotenv\Dotenv;
 
-/**
- * Class GenerateReadmeCommand
- *
- * A Symfony Console Command that generates a README.md file
- * for a given Drupal module using AI-generated summaries.
- */
 class GenerateReadmeCommand extends Command
 {
-    /**
-     * GenerateReadmeCommand constructor.
-     */
     public function __construct()
     {
         parent::__construct('generate-readme');
     }
 
-    /**
-     * Configures the command name, description, and input arguments.
-     *
-     * @return void
-     */
     protected function configure(): void
     {
         $this
@@ -37,37 +24,36 @@ class GenerateReadmeCommand extends Command
             ->addArgument('module_path', InputArgument::REQUIRED, 'Path to the module');
     }
 
-    /**
-     * Executes the console command to generate the README file.
-     *
-     * @param InputInterface $input
-     *   The input interface.
-     * @param OutputInterface $output
-     *   The output interface.
-     *
-     * @return int
-     *   Command exit code.
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $config = require __DIR__ . '/../../config/ai.php';
+        $envPath = __DIR__ . '/../../';
+        $envFile = $envPath . '.env';
 
-        $requiredKeys = ['api_key', 'base_uri', 'chat_endpoint', 'model'];
-        $missing = [];
-
-        foreach ($requiredKeys as $key) {
-            if (empty($config[$key])) {
-                $missing[] = $key;
-            }
+        if (!file_exists($envFile)) {
+            $output->writeln("<error>❌ .env file not found.</error>");
+            $output->writeln("Please create a .env file with the following keys:");
+            $output->writeln("API_KEY=");
+            $output->writeln("BASE_URI=");
+            $output->writeln("CHAT_ENDPOINT=");
+            $output->writeln("MODEL=");
+            return Command::FAILURE;
         }
 
-        if (!empty($missing)) {
-            $output->writeln("<error>❌ Missing values in config/ai.php:</error>");
-            foreach ($missing as $key) {
-                $output->writeln(" - $key");
+        $dotenv = Dotenv::createImmutable($envPath);
+        $dotenv->safeLoad();
+
+        $config = [
+            'api_key' => $_ENV['API_KEY'] ?? '',
+            'base_uri' => $_ENV['BASE_URI'] ?? '',
+            'chat_endpoint' => $_ENV['CHAT_ENDPOINT'] ?? '',
+            'model' => $_ENV['MODEL'] ?? '',
+        ];
+
+        foreach ($config as $key => $value) {
+            if (empty($value)) {
+                $output->writeln("<error>❌ Missing env variable:</error> $key");
+                return Command::FAILURE;
             }
-            $output->writeln("\n<comment>Please provide the required values in config/ai.php before running the command.</comment>");
-            return Command::FAILURE;
         }
 
         $modulePath = $input->getArgument('module_path');
@@ -89,7 +75,7 @@ class GenerateReadmeCommand extends Command
             'functions' => $moduleData['functions'] ?? [],
         ];
 
-        $ai = new AIResponse();
+        $ai = new AIResponse($config);
         $summary = $ai->summarizeArray($structuredData);
 
         $readmePath = $modulePath . '/README.md';

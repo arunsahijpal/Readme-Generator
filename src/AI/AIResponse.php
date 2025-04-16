@@ -4,37 +4,14 @@ namespace Innoraft\ReadmeGenerator\AI;
 
 use GuzzleHttp\Client;
 
-/**
- * Class AIResponse
- *
- * Handles communication with the AI API to generate README content
- * based on scanned Drupal module data.
- */
 class AIResponse
 {
-    /**
-     * Guzzle HTTP client instance.
-     *
-     * @var \GuzzleHttp\Client
-     */
     protected Client $client;
-
-    /**
-     * Configuration array for the AI API.
-     *
-     * @var array
-     */
     protected array $config;
 
-    /**
-     * AIResponse constructor.
-     *
-     * Initializes the Guzzle client with base URI and headers
-     * loaded from the configuration file.
-     */
-    public function __construct()
+    public function __construct(array $config)
     {
-        $this->config = require __DIR__ . '/../../config/ai.php';
+        $this->config = $config;
 
         $this->client = new Client([
             'base_uri' => $this->config['base_uri'],
@@ -45,19 +22,9 @@ class AIResponse
         ]);
     }
 
-    /**
-     * Sends module data to the AI API and returns summarized README content.
-     *
-     * @param array $moduleData
-     *   An array of structured data extracted from the Drupal module.
-     *
-     * @return string
-     *   The generated README.md content, or an error message.
-     */
     public function summarizeArray(array $moduleData): string
     {
         $jsonContent = json_encode($moduleData, JSON_PRETTY_PRINT);
-
         $template = <<<EOT
         You are a Drupal module documentation expert. Your task is to generate only the contents of a README.md file for a Drupal module.
         
