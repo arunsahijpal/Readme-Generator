@@ -72,7 +72,6 @@ After running the command, you'll get a `README.md` file with:
 
 ## 🛠 Development Notes
 
-- This package does not include a `vendor/` directory — it relies on your project’s Composer autoloading.
 - If you are using this inside a Drupal module or sub-directory, ensure paths are resolved correctly.
 - The binary path is defined in the `composer.json` under `"bin": ["bin/readme-generator"]`.
 
