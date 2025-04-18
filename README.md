@@ -4,8 +4,6 @@
 
 ## 🚀 Features
 
-- Analyzes module structure and extracts metadata (name, description, dependencies, classes, etc.)
-- Sends the metadata to an AI endpoint to summarize the module
 - Generates a `README.md` file in the module folder
 - Supports `.env`-based configuration for flexible local/remote AI services
 - Can be executed from both the **project root** and **within module folders**
@@ -31,15 +29,10 @@ composer require innoraft/readme-generator --dev
 
 ## ⚙️ Setup
 
-Create a `.env` file in your project root with the following content:
+Copy the example environment file and update it with your actual credentials:
 
-```dotenv
-API_KEY=your-api-key
-BASE_URI=https://api.example.com
-CHAT_ENDPOINT=/v1/chat/completions
-MODEL=model-id
-```
-
+```bash
+cp .env.example .env
 > These settings are used to connect to the AI summarization service.
 
 ---
@@ -49,18 +42,10 @@ MODEL=model-id
 ### 📍 From Project Root
 
 ```bash
-vendor/bin/readme-generator generate-readme web/modules/contrib/MODULE_NAME
+vendor/bin/readme-generator web/modules/contrib/MODULE_NAME
 ```
 
 This command scans the specified module and writes `README.md` inside it.
-
-### 📁 From Inside a Module Folder
-
-If you're inside the module folder (`web/modules/custom/my_module`):
-
-```bash
-../../../../vendor/bin/readme-generator generate-readme .
-```
 
 ---
 

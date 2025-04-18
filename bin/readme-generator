@@ -1,11 +1,35 @@
 #!/usr/bin/env php
 <?php
 
-require __DIR__ . '/../../../autoload.php';
-
 use Symfony\Component\Console\Application;
 use Innoraft\ReadmeGenerator\Console\GenerateReadmeCommand;
 
-$application = new Application();
-$application->add(new GenerateReadmeCommand());
-$application->run();
+// Locate Composer autoload file
+$cwd = isset($_SERVER['PWD']) && is_dir($_SERVER['PWD']) ? $_SERVER['PWD'] : getcwd();
+$autoloadFile = false;
+$candidates = [
+    $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php',
+    dirname(__DIR__, 2) . '/autoload.php',
+    __DIR__ . '/vendor/autoload.php',
+];
+
+foreach ($candidates as $candidate) {
+    if (file_exists($candidate)) {
+        $autoloadFile = $candidate;
+        break;
+    }
+}
+
+if (!$autoloadFile) {
+    throw new \Exception("Could not locate autoload.php. cwd: $cwd; __DIR__: " . __DIR__);
+}
+
+$loader = include $autoloadFile;
+if (!$loader) {
+    throw new \Exception("Invalid autoload file: $autoloadFile");
+}
+
+$app = new Application();
+$app->add(new GenerateReadmeCommand());
+$app->setDefaultCommand('generate-readme', true);
+$app->run();
