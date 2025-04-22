@@ -1,5 +1,5 @@
 {
-    "name": "innoraft/readme-generator",
+    "name": "innoraft/ai-readme-generator",
     "description": "This package will generate a Readme.md file according to your codebase.",
     "license": "MIT",
     "autoload": {
