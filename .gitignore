@@ -1,0 +1,30 @@
+
+# Composer dependencies
+/vendor/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+
+# Logs and temp files
+*.log
+*.tmp
+*.cache
+
+# PHPUnit / test artifacts
+.phpunit.result.cache
+coverage/
+
+# Build artifacts
+*.phar
+
+# System files
+*.bak
+
+# Generated README (if temporary)
+README_NEW.md
