@@ -73,13 +73,16 @@ class GenerateReadmeCommand extends Command
         if (!$envPath) {
             $output->writeln("<error>:x: .env file not found.</error>");
             $output->writeln("Please create a .env file with the following keys:");
-            $output->writeln("AI_PROVIDER=\nAPI_KEY=");
+            $output->writeln("AI_PROVIDER=\nAPI_KEY=\n");
             return Command::FAILURE;
         }
         $dotenv = Dotenv::createImmutable($envPath);
         $dotenv->safeLoad();
-        $provider = strtolower($_ENV['AI_PROVIDER'] ?? '');
-        $apiKey = $_ENV['API_KEY'] ?? '';
+        $provider = strtolower(trim($_ENV['AI_PROVIDER'] ?? ''));
+        $apiKey = trim($_ENV['API_KEY'] ?? '');
+        $ai_model = isset($_ENV['AI_MODEL']) && strlen(trim($_ENV['AI_MODEL'])) > 0
+            ? trim($_ENV['AI_MODEL'])
+            : 'gpt-3.5-turbo';
         if (empty($provider) || empty($apiKey)) {
             $output->writeln("<error>:x: Missing AI_PROVIDER or API_KEY in .env file.</error>");
             return Command::FAILURE;
@@ -105,7 +108,7 @@ class GenerateReadmeCommand extends Command
             'api_key' => $apiKey,
             'base_uri' => $providerConfigs[$provider]['base_uri'],
             'chat_endpoint' => $providerConfigs[$provider]['chat_endpoint'],
-            'model' => $providerConfigs[$provider]['model'],
+            'model' => $ai_model
         ];
         $modulePath = $input->getArgument('module_path');
         if (!is_dir($modulePath)) {
